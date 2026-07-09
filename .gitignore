@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and test output
+coverage/
+.nyc_output/
+junit.xml
+
+# Build output
+dist/
+build/
+out/
+
+# Caches
+.npm/
+.pnpm-store/
+.eslintcache
+.cache/
+.parcel-cache/
+.next/
+.turbo/
+
+# Local database and generated dumps
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+*.backup
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Codex local workspace metadata
+.agents/
+.codex/
+work/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

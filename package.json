@@ -1,0 +1,33 @@
+{
+  "name": "safestock-analytics-api",
+  "version": "0.1.0",
+  "description": "Sprint 1 backend for SafeStock Analytics operations, inventory, sales, dashboard, and identity.",
+  "main": "src/server.js",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "check": "node --check src/server.js && node --check src/app.js && node --check src/config/env.js && node --check src/config/db.js && node --check src/controllers/alertController.js && node --check src/controllers/authController.js && node --check src/controllers/dashboardController.js && node --check src/controllers/employeeController.js && node --check src/controllers/inventoryController.js && node --check src/controllers/productController.js && node --check src/controllers/saleController.js && node --check src/controllers/userController.js && node --check src/middleware/authMiddleware.js && node --check src/middleware/authorizationMiddleware.js && node --check src/middleware/errorMiddleware.js && node --check src/models/alertModel.js && node --check src/models/dashboardModel.js && node --check src/models/inventoryModel.js && node --check src/models/productModel.js && node --check src/models/saleModel.js && node --check src/models/userModel.js && node --check src/routes/alertRoutes.js && node --check src/routes/authRoutes.js && node --check src/routes/dashboardRoutes.js && node --check src/routes/employeeRoutes.js && node --check src/routes/inventoryRoutes.js && node --check src/routes/productRoutes.js && node --check src/routes/saleRoutes.js && node --check src/routes/userRoutes.js && node --check src/services/alertService.js && node --check src/services/authService.js && node --check src/services/dashboardService.js && node --check src/services/employeeService.js && node --check src/services/inventoryService.js && node --check src/services/productService.js && node --check src/services/saleService.js && node --check src/services/userService.js && node --check src/utils/jwt.js"
+  },
+  "keywords": [
+    "safestock",
+    "express",
+    "jwt",
+    "bcrypt",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "bcrypt": "5.1.1",
+    "cors": "2.8.5",
+    "dotenv": "16.4.7",
+    "express": "4.21.2",
+    "helmet": "8.0.0",
+    "jsonwebtoken": "9.0.2",
+    "pg": "8.13.1"
+  },
+  "devDependencies": {
+    "nodemon": "3.1.9"
+  }
+}
