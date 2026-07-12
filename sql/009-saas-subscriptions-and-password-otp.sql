@@ -25,8 +25,8 @@ INSERT INTO planes_suscripcion
    canal_alertas, nivel_soporte)
 VALUES
   ('EMPRENDEDOR', 'Emprendedor', 29.00, 1, 2, FALSE, FALSE, NULL, FALSE, FALSE, 'VISUAL', 'CORREO'),
-  ('CRECIMIENTO', 'Crecimiento', 99.00, 3, NULL, TRUE, TRUE, 50.00, TRUE, FALSE, 'SMS_PUSH', 'CHAT'),
-  ('CORPORATIVO', 'Corporativo', 199.00, NULL, NULL, TRUE, TRUE, 0.00, TRUE, TRUE, 'TIEMPO_REAL', 'PREMIUM_24_7')
+  ('CRECIMIENTO', 'Crecimiento', 89.00, 3, NULL, TRUE, TRUE, 50.00, TRUE, FALSE, 'SMS_PUSH', 'CHAT'),
+  ('CORPORATIVO', 'Corporativo', 189.00, NULL, NULL, TRUE, TRUE, 0.00, TRUE, TRUE, 'TIEMPO_REAL', 'PREMIUM_24_7')
 ON CONFLICT (codigo) DO UPDATE SET
   nombre = EXCLUDED.nombre,
   precio_mensual = EXCLUDED.precio_mensual,
