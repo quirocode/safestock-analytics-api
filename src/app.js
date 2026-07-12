@@ -50,7 +50,7 @@ class Application {
     const subscriptionService = new SubscriptionService(new PostgresSubscriptionRepository(this.database));
     const identityRepository = new PostgresIdentityRepository(this.database);
     const authentication = new AuthenticationMiddleware({ tokenService, identityRepository });
-    const identityController = new IdentityController(new IdentityService({ repository: identityRepository, tokenService, totpService: new TotpService(), subscriptionService, recoveryMailer: new PasswordRecoveryMailer({ environment: env.nodeEnv }) }));
+    const identityController = new IdentityController(new IdentityService({ repository: identityRepository, tokenService, totpService: new TotpService(), subscriptionService, recoveryMailer: new PasswordRecoveryMailer({ config: env.email }) }));
     const productController = new ProductController(new ProductCatalogService({ repository: new PostgresProductRepository(this.database), excelImporter: new ExcelProductImporter() }));
     const inventoryController = new InventoryController(new InventoryService(new PostgresInventoryRepository(this.database)));
     const salesController = new SalesController(new SalesProcessingService({ repository: new PostgresSaleRepository(this.database), receiptGenerator: new PdfReceiptGenerator(), subscriptionService }));
