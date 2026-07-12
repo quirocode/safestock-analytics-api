@@ -5,6 +5,8 @@ node_modules/
 .env
 .env.*
 !.env.example
+local.settings.json
+.azure/
 
 # Logs
 logs/
@@ -66,3 +68,5 @@ work/
 tmp/
 temp/
 *.tmp
+
+legacy-mvc-backup.zip
