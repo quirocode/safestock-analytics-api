@@ -10,7 +10,7 @@ API DDD/hexagonal para identidad, catálogo, inventario, ventas, analítica y su
 ## Configuracion
 
 1. Crear la base de datos PostgreSQL.
-2. Ejecutar con el usuario administrador los scripts de `sql/001-identity.sql` a `sql/009-saas-subscriptions-and-password-otp.sql`, en orden.
+2. Ejecutar con el usuario administrador todos los scripts numerados de la carpeta `sql`, en orden.
 3. Copiar `.env.example` a `.env` y configurar las variables `DB_*` y `JWT_SECRET`.
 4. Instalar dependencias con `npm ci`.
 5. Levantar la API con `npm run dev` o `npm start`.

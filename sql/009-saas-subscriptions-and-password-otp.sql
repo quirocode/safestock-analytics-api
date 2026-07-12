@@ -24,7 +24,7 @@ INSERT INTO planes_suscripcion
    antifraude_habilitado, umbral_antifraude, dashboard_actividades, dashboard_analitico,
    canal_alertas, nivel_soporte)
 VALUES
-  ('EMPRENDEDOR', 'Emprendedor', 49.00, 1, 2, FALSE, FALSE, NULL, FALSE, FALSE, 'VISUAL', 'CORREO'),
+  ('EMPRENDEDOR', 'Emprendedor', 29.00, 1, 2, FALSE, FALSE, NULL, FALSE, FALSE, 'VISUAL', 'CORREO'),
   ('CRECIMIENTO', 'Crecimiento', 99.00, 3, NULL, TRUE, TRUE, 50.00, TRUE, FALSE, 'SMS_PUSH', 'CHAT'),
   ('CORPORATIVO', 'Corporativo', 199.00, NULL, NULL, TRUE, TRUE, 0.00, TRUE, TRUE, 'TIEMPO_REAL', 'PREMIUM_24_7')
 ON CONFLICT (codigo) DO UPDATE SET
