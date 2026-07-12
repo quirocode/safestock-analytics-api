@@ -4,11 +4,12 @@ class Sale {
   static IGV_RATE = 0.18;
   static IGV_FACTOR = 1 + Sale.IGV_RATE;
 
-  constructor({ userId, items }) {
+  constructor({ userId, items, plan }) {
     this.userId = Number(userId);
     this.items = Sale.normalizeItems(items);
     this.details = [];
     this.amounts = null;
+    this.plan = plan;
   }
 
   static normalizeItems(items) {
@@ -78,6 +79,19 @@ class Sale {
       subtotal: Sale.toDecimal(this.amounts.subtotalCents),
       igv: Sale.toDecimal(this.amounts.igvCents)
     };
+  }
+
+  isSuspicious() {
+    return Boolean(this.plan?.fraudEnabled) && this.plan.fraudThreshold !== null &&
+      Number(this.financialBreakdown.total) > this.plan.fraudThreshold;
+  }
+
+  static cancellationReason(plan, reason) {
+    const normalized = String(reason || '').trim();
+    if (plan.requiresCancellationReason && normalized.length < 10) {
+      throw new HttpError('La justificación de anulación debe tener al menos 10 caracteres.', 400);
+    }
+    return normalized || 'Anulación permitida por el plan sin justificación obligatoria.';
   }
 
   static toCents(value) {

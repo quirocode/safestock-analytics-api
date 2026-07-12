@@ -93,6 +93,14 @@ class PostgresSaleRepository extends SaleRepositoryPort {
         );
       }
 
+      if (sale.isSuspicious()) {
+        await client.query(
+          `INSERT INTO eventos_auditoria(tipo, entidad, entidad_id, usuario_id, descripcion, severidad)
+           VALUES('VENTA_MONTO_ELEVADO', 'VENTA', $1, $2, $3, 'ADVERTENCIA')`,
+          [venta.id, sale.userId, `Venta por S/ ${amounts.total}; supera el umbral antifraude del plan.`]
+        );
+      }
+
       return this.findById(venta.id, client);
     });
   }

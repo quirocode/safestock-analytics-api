@@ -2,14 +2,17 @@ const HttpError = require('../../shared/domain/http-error');
 const Sale = require('../domain/sale');
 
 class SalesProcessingService {
-  constructor({ repository, receiptGenerator }) {
+  constructor({ repository, receiptGenerator, subscriptionService }) {
     this.repository = repository;
     this.receiptGenerator = receiptGenerator;
+    this.subscriptionService = subscriptionService;
   }
 
-  async register(userId, payload) {
+  async register(userId, organizationId, payload) {
+    const plan = await this.subscriptionService.getActivePlan(organizationId);
     const sale = new Sale({
       userId,
+      plan,
       items: payload.productos || payload.items || payload.detalles
     });
     const products = await this.repository.findProductsForSale(sale.items);
@@ -28,9 +31,9 @@ class SalesProcessingService {
     return { ventas: await this.repository.list(pagination), pagination };
   }
 
-  async cancel(id, userId, payload) {
-    const reason = String(payload.motivo || '').trim();
-    if (reason.length < 10) throw new HttpError('El motivo de anulacion debe tener al menos 10 caracteres.', 400);
+  async cancel(id, userId, organizationId, payload) {
+    const plan = await this.subscriptionService.getActivePlan(organizationId);
+    const reason = Sale.cancellationReason(plan, payload.motivo);
     return this.repository.cancel(id, userId, reason);
   }
 

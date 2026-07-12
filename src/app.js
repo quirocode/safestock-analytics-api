@@ -30,6 +30,11 @@ const CsvReportExporter = require('./monitoring-analytics/infrastructure/csv-rep
 const AnalyticsService = require('./monitoring-analytics/application/analytics-service');
 const AnalyticsController = require('./monitoring-analytics/interfaces/analytics-controller');
 const AnalyticsRoutes = require('./monitoring-analytics/interfaces/analytics-routes');
+const PostgresSubscriptionRepository = require('./subscription-management/infrastructure/postgres-subscription-repository');
+const SubscriptionService = require('./subscription-management/application/subscription-service');
+const SubscriptionController = require('./subscription-management/interfaces/subscription-controller');
+const SubscriptionRoutes = require('./subscription-management/interfaces/subscription-routes');
+const PasswordRecoveryMailer = require('./identity-access/infrastructure/password-recovery-mailer');
 
 class Application {
   constructor() {
@@ -42,20 +47,23 @@ class Application {
 
   configureDependencies() {
     const tokenService = new JwtTokenService({ secret: env.jwtSecret, expiresIn: env.jwtExpiresIn });
+    const subscriptionService = new SubscriptionService(new PostgresSubscriptionRepository(this.database));
     const identityRepository = new PostgresIdentityRepository(this.database);
     const authentication = new AuthenticationMiddleware({ tokenService, identityRepository });
-    const identityController = new IdentityController(new IdentityService({ repository: identityRepository, tokenService, totpService: new TotpService() }));
+    const identityController = new IdentityController(new IdentityService({ repository: identityRepository, tokenService, totpService: new TotpService(), subscriptionService, recoveryMailer: new PasswordRecoveryMailer({ environment: env.nodeEnv }) }));
     const productController = new ProductController(new ProductCatalogService({ repository: new PostgresProductRepository(this.database), excelImporter: new ExcelProductImporter() }));
     const inventoryController = new InventoryController(new InventoryService(new PostgresInventoryRepository(this.database)));
-    const salesController = new SalesController(new SalesProcessingService({ repository: new PostgresSaleRepository(this.database), receiptGenerator: new PdfReceiptGenerator() }));
+    const salesController = new SalesController(new SalesProcessingService({ repository: new PostgresSaleRepository(this.database), receiptGenerator: new PdfReceiptGenerator(), subscriptionService }));
     const analyticsRepository = new PostgresAnalyticsRepository(this.database, env.reportTimeZone);
-    const analyticsController = new AnalyticsController(new AnalyticsService({ repository: analyticsRepository, reportExporter: new CsvReportExporter(), timeZone: env.reportTimeZone }));
+    const analyticsController = new AnalyticsController(new AnalyticsService({ repository: analyticsRepository, reportExporter: new CsvReportExporter(), timeZone: env.reportTimeZone }), subscriptionService);
+    const subscriptionController = new SubscriptionController(subscriptionService);
     this.routes = {
       identity: new IdentityRoutes({ controller: identityController, authentication }).router,
       products: new ProductRoutes({ controller: productController, authentication }).router,
       inventory: new InventoryRoutes({ controller: inventoryController, authentication }).router,
       sales: new SalesRoutes({ controller: salesController, authentication }).router,
-      analytics: new AnalyticsRoutes({ controller: analyticsController, authentication }).router
+      analytics: new AnalyticsRoutes({ controller: analyticsController, authentication }).router,
+      subscriptions: new SubscriptionRoutes({ controller: subscriptionController, authentication }).router
     };
   }
 
@@ -74,6 +82,7 @@ class Application {
     this.express.use('/api/inventario', this.routes.inventory);
     this.express.use('/api/ventas', this.routes.sales);
     this.express.use('/api', this.routes.analytics);
+    this.express.use('/api/suscripcion', this.routes.subscriptions);
     const errors = new ErrorHandler();
     this.express.use(errors.notFound.bind(errors));
     this.express.use(errors.handle.bind(errors));

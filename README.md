@@ -1,6 +1,6 @@
 # SafeStock Analytics API
 
-Sprint 1: base de datos, autenticacion y perfil de usuario.
+API DDD/hexagonal para identidad, catálogo, inventario, ventas, analítica y suscripciones SaaS.
 
 ## Requisitos
 
@@ -10,14 +10,12 @@ Sprint 1: base de datos, autenticacion y perfil de usuario.
 ## Configuracion
 
 1. Crear la base de datos PostgreSQL.
-2. Ejecutar `sql/001_identity.sql`.
-3. Ejecutar `sql/002_catalog.sql`.
-4. Ejecutar `sql/003_inventory.sql`.
-5. Ejecutar `sql/004_sales.sql`.
-6. Ejecutar `sql/005_dashboard_alerts.sql`.
-7. Copiar `.env.example` a `.env` y ajustar `DATABASE_URL` y `JWT_SECRET`.
-8. Instalar dependencias con `npm install`.
-9. Levantar la API con `npm run dev` o `npm start`.
+2. Ejecutar con el usuario administrador los scripts de `sql/001-identity.sql` a `sql/009-saas-subscriptions-and-password-otp.sql`, en orden.
+3. Copiar `.env.example` a `.env` y configurar las variables `DB_*` y `JWT_SECRET`.
+4. Instalar dependencias con `npm ci`.
+5. Levantar la API con `npm run dev` o `npm start`.
+
+> Las migraciones contienen operaciones DDL y deben ejecutarse con `admin2026` en Azure. El usuario de aplicación `safestock_user` no es propietario de las tablas y no debe recibir permisos DDL.
 
 ## Endpoints
 

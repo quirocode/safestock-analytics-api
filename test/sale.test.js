@@ -39,11 +39,24 @@ test('application service prices the Sale domain entity before persistence', asy
     ],
     register: async (sale) => { persistedSale = sale; return sale.financialBreakdown; }
   };
-  const service = new SalesProcessingService({ repository, receiptGenerator: {} });
+  const plan = { fraudEnabled: false, fraudThreshold: null, requiresCancellationReason: true };
+  const subscriptionService = { getActivePlan: async () => plan };
+  const service = new SalesProcessingService({ repository, receiptGenerator: {}, subscriptionService });
 
-  const result = await service.register(1, { productos: [{ productoId: 10, cantidad: 1 }] });
+  const result = await service.register(1, 1, { productos: [{ productoId: 10, cantidad: 1 }] });
 
   assert.ok(persistedSale instanceof Sale);
   assert.equal(result.total, '3.00');
   assert.equal(result.igv, '0.46');
+});
+
+test('requires a cancellation reason only when the subscription plan demands it', () => {
+  assert.equal(
+    Sale.cancellationReason({ requiresCancellationReason: false }, ''),
+    'Anulación permitida por el plan sin justificación obligatoria.'
+  );
+  assert.throws(
+    () => Sale.cancellationReason({ requiresCancellationReason: true }, ''),
+    /justificación de anulación/
+  );
 });

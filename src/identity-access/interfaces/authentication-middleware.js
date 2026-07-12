@@ -13,7 +13,7 @@ class AuthenticationMiddleware {
       if (payload.purpose === '2fa') return res.status(401).json({ message: 'Completa la autenticacion 2FA.' });
       const user = await this.identityRepository.findUserById(payload.sub);
       if (!user || user.estado !== 'activo') return res.status(401).json({ message: 'Token invalido o usuario inactivo.' });
-      req.user = { id: user.id, correo: user.correo, rol: user.rol_nombre, permisos: user.permisos || [] };
+      req.user = { id: user.id, correo: user.correo, rol: user.rol_nombre, permisos: user.permisos || [], organizationId: user.organizacion_id };
       next();
     } catch {
       res.status(401).json({ message: 'Token invalido o expirado.' });

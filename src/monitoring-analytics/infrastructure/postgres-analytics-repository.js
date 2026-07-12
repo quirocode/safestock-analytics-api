@@ -42,12 +42,14 @@ class PostgresAnalyticsRepository extends AnalyticsRepositoryPort {
     return result.rows;
   }
 
-  async suspicious() {
+  async suspicious(threshold = 0) {
     const result = await this.database.query(
-      `SELECT id, tipo, entidad, entidad_id, descripcion, severidad, fecha_hora
-       FROM eventos_auditoria
-       ORDER BY fecha_hora DESC
-       LIMIT 20`
+      `SELECT e.id, e.tipo, e.entidad, e.entidad_id, e.descripcion, e.severidad, e.fecha_hora
+       FROM eventos_auditoria e
+       LEFT JOIN ventas v ON e.entidad = 'VENTA' AND v.id = e.entidad_id
+       WHERE e.tipo <> 'VENTA_MONTO_ELEVADO' OR COALESCE(v.total, 0) > $1
+       ORDER BY e.fecha_hora DESC
+       LIMIT 20`, [threshold]
     );
     return result.rows;
   }
