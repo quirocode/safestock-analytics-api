@@ -82,15 +82,24 @@ class PostgresSaleRepository extends SaleRepositoryPort {
         const update = await client.query(
           `UPDATE productos
            SET stock_actual = stock_actual - $2, actualizado_en = NOW()
-           WHERE id = $1 AND stock_actual >= $2`,
+           WHERE id = $1 AND stock_actual >= $2
+           RETURNING stock_actual`,
           [detail.productId, detail.quantity]
         );
         if (update.rowCount !== 1) throw new HttpError('No se pudo descontar el stock.', 400);
         await client.query(
-          `INSERT INTO historial_inventario(producto_id, tipo_movimiento, cantidad, usuario_id, motivo)
-           VALUES($1, 'VENTA', $2, $3, $4)`,
-          [detail.productId, detail.quantity, sale.userId, `Venta #${venta.id}`]
+          `INSERT INTO historial_inventario(producto_id, tipo_movimiento, cantidad, usuario_id, motivo, variacion_stock)
+           VALUES($1, 'VENTA', $2, $3, $4, $5)`,
+          [detail.productId, detail.quantity, sale.userId, `Venta #${venta.id}`, -detail.quantity]
         );
+        const remaining = Number(update.rows[0].stock_actual);
+        if (remaining === 0) {
+          await client.query(
+            `INSERT INTO eventos_auditoria(tipo, entidad, entidad_id, usuario_id, descripcion, severidad)
+             VALUES('STOCK_CERO', 'PRODUCTO', $1, $2, $3, 'CRITICA')`,
+            [detail.productId, sale.userId, `⚠️ URGENTE: El producto ${detail.nombre}/${detail.sku} ha llegado a Stock 0. Reposición inmediata requerida.`]
+          );
+        }
       }
 
       if (sale.isSuspicious()) {
@@ -156,9 +165,9 @@ class PostgresSaleRepository extends SaleRepositoryPort {
       for (const detail of details.rows) {
         await client.query('UPDATE productos SET stock_actual = stock_actual + $2, actualizado_en = NOW() WHERE id = $1', [detail.id_producto, detail.cantidad]);
         await client.query(
-          `INSERT INTO historial_inventario(producto_id, tipo_movimiento, cantidad, usuario_id, motivo)
-           VALUES($1, 'ENTRADA', $2, $3, $4)`,
-          [detail.id_producto, detail.cantidad, userId, `Anulacion venta #${id}: ${reason}`]
+          `INSERT INTO historial_inventario(producto_id, tipo_movimiento, cantidad, usuario_id, motivo, variacion_stock)
+           VALUES($1, 'ENTRADA', $2, $3, $4, $5)`,
+          [detail.id_producto, detail.cantidad, userId, `Anulacion venta #${id}: ${reason}`, detail.cantidad]
         );
       }
       const updated = await client.query(

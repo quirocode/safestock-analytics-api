@@ -40,11 +40,11 @@ class PostgresInventoryRepository extends InventoryRepositoryPort {
       );
       const loggedQuantity = movement.type === 'AJUSTE' ? Math.abs(next - current) || 1 : movement.quantity;
       const log = await client.query(
-        `INSERT INTO historial_inventario(producto_id,tipo_movimiento,cantidad,usuario_id,motivo)
-         VALUES($1,$2,$3,$4,$5) RETURNING *`,
-        [movement.productId, movement.type, loggedQuantity, movement.userId, movement.reason]
+        `INSERT INTO historial_inventario(producto_id,tipo_movimiento,cantidad,usuario_id,motivo,variacion_stock)
+         VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,
+        [movement.productId, movement.type, loggedQuantity, movement.userId, movement.reason, next - current]
       );
-      return { producto: updated.rows[0], movimiento: log.rows[0] };
+      return { producto: updated.rows[0], movimiento: log.rows[0], stockAnterior: current };
     };
     return clientOverride ? execute(clientOverride) : this.database.transaction(execute);
   }
@@ -55,6 +55,14 @@ class PostgresInventoryRepository extends InventoryRepositoryPort {
       for (const movement of movements) results.push(await this.registerMovement(movement, client));
       return results;
     });
+  }
+
+  async recordCriticalAlert({ type, severity, description, productId, userId }) {
+    await this.database.query(
+      `INSERT INTO eventos_auditoria(tipo, entidad, entidad_id, usuario_id, descripcion, severidad)
+       VALUES($1, 'PRODUCTO', $2, $3, $4, $5)`,
+      [type, productId, userId, description, severity]
+    );
   }
 }
 module.exports = PostgresInventoryRepository;
