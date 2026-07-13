@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const HttpError = require('../../shared/domain/http-error');
 const User = require('../domain/user');
+const Organization = require('../domain/organization');
 
 class IdentityService {
   constructor({ repository, tokenService, totpService, subscriptionService, recoveryMailer }) {
@@ -34,6 +35,37 @@ class IdentityService {
     }
 
     return this.completeLogin(user, metadata);
+  }
+
+  async register(payload) {
+    const organization = new Organization({
+      name: payload.nombreEmpresa || payload.empresa,
+      administratorName: payload.nombreAdministrador || payload.administrador,
+      email: payload.correo || payload.email
+    }).assertValid();
+    const password = String(payload.password || payload.contrasena || '');
+    if (password.length < 8) throw new HttpError('La contraseña debe tener al menos 8 caracteres.', 400);
+    const names = organization.administratorNames;
+    try {
+      const user = await this.repository.registerOrganizationWithAdministrator({
+        organizationName: organization.name,
+        email: organization.email,
+        passwordHash: await bcrypt.hash(password, 12),
+        ...names
+      });
+      if (!user) throw new HttpError('No fue posible asignar el plan Emprendedor o el rol Administrador.', 409);
+      return {
+        token: this.tokenService.sign(user),
+        usuario: {
+          id: user.id, correo: user.correo, nombres: user.nombres, apellidos: user.apellidos,
+          rol: user.rol_nombre, permisos: user.permisos, organizacionId: user.organizacion_id
+        }
+      };
+    } catch (error) {
+      if (error.code === '23505') throw new HttpError('El correo electrónico ya está registrado.', 409);
+      if (error.code === 'REGISTRATION_CONFIGURATION_ERROR') throw new HttpError('El registro no está disponible temporalmente.', 503);
+      throw error;
+    }
   }
 
   async verifyTwoFactor({ challengeToken, codigo }, metadata = {}) {
@@ -113,7 +145,7 @@ class IdentityService {
     return { message: 'Contraseña actualizada correctamente.' };
   }
 
-  async listUsers() { return this.repository.listUsers(); }
+  async listUsers(organizationId) { return this.repository.listUsers(organizationId); }
 
   async createUser(payload, organizationId) {
     const user = new User({
@@ -148,9 +180,21 @@ class IdentityService {
     return this.repository.updateProfile(userId, { nombres, apellidos });
   }
 
-  async updateStatus(id, estado) {
-    if (!['activo', 'inactivo', 'bloqueado'].includes(estado)) throw new HttpError('Estado invalido.', 400);
-    const user = await this.repository.updateStatus(id, estado);
+  async updateStatus({ targetId, requesterId, organizationId, estado, password }) {
+    if (!['activo', 'inactivo', 'bloqueado'].includes(estado)) throw new HttpError('Estado inválido.', 400);
+    const target = await this.repository.findUserById(targetId);
+    if (!target || String(target.organizacion_id) !== String(organizationId)) throw new HttpError('Usuario no encontrado.', 404);
+    const fullUser = String(targetId) === String(requesterId) && estado !== 'activo'
+      ? await this.repository.findUserByEmail(target.correo)
+      : null;
+    new User({ id: target.id, correo: target.correo, nombres: target.nombres, apellidos: target.apellidos, estado })
+      .assertSelfDeactivationAuthorized({
+        requesterId,
+        password,
+        passwordHash: fullUser?.password_hash,
+        passwordMatches: fullUser ? await bcrypt.compare(password || '', fullUser.password_hash) : false
+      });
+    const user = await this.repository.updateStatus(targetId, estado, organizationId);
     if (!user) throw new HttpError('Usuario no encontrado.', 404);
     return user;
   }

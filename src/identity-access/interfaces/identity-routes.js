@@ -4,6 +4,7 @@ class IdentityRoutes {
   constructor({ controller, authentication }) {
     this.router = express.Router();
     this.router.post('/auth/login', controller.login);
+    this.router.post('/auth/register', controller.register);
     this.router.get('/auth/verify', authentication.authenticate, controller.verify);
     this.router.post('/auth/2fa/verificar', controller.verifyTwoFactor);
     this.router.post('/auth/recuperar-password', controller.recoverPassword);

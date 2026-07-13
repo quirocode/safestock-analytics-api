@@ -39,12 +39,14 @@ class PostgresIdentityRepository extends IdentityRepositoryPort {
     return result.rows[0] || null;
   }
 
-  async listUsers() {
+  async listUsers(organizationId) {
     const result = await this.database.query(
       `SELECT u.id, u.correo, u.nombres, u.apellidos, u.estado, u.rol_id,
               u.two_factor_enabled, u.ultimo_acceso_en, u.creado_en, r.nombre AS rol_nombre
        FROM usuarios u JOIN roles r ON r.id = u.rol_id
+       WHERE u.organizacion_id = $1
        ORDER BY u.apellidos, u.nombres`
+      , [organizationId]
     );
     return result.rows;
   }
@@ -68,13 +70,42 @@ class PostgresIdentityRepository extends IdentityRepositoryPort {
     return result.rows[0] || null;
   }
 
-  async updateStatus(id, estado) {
+  async updateStatus(id, estado, organizationId) {
     const result = await this.database.query(
-      `UPDATE usuarios SET estado = $2, actualizado_en = NOW() WHERE id = $1
+      `UPDATE usuarios SET estado = $2, actualizado_en = NOW()
+       WHERE id = $1 AND organizacion_id = $3
        RETURNING id, correo, nombres, apellidos, estado`,
-      [id, estado]
+      [id, estado, organizationId]
     );
     return result.rows[0] || null;
+  }
+
+  async registerOrganizationWithAdministrator({ organizationName, email, passwordHash, nombres, apellidos }) {
+    return this.database.transaction(async (client) => {
+      const organization = await client.query(
+        `INSERT INTO organizaciones (plan_suscripcion_id, razon_social, nombre_comercial)
+         SELECT id, $1, $1 FROM planes_suscripcion WHERE codigo = 'EMPRENDEDOR' AND activo = TRUE
+         RETURNING id, nombre_comercial`,
+        [organizationName]
+      );
+      if (!organization.rowCount) {
+        const error = new Error('Plan Emprendedor no disponible.');
+        error.code = 'REGISTRATION_CONFIGURATION_ERROR';
+        throw error;
+      }
+      const user = await client.query(
+        `INSERT INTO usuarios (rol_id, correo, password_hash, nombres, apellidos, estado, organizacion_id)
+         SELECT id, $1, $2, $3, $4, 'activo', $5 FROM roles WHERE nombre = 'ADMIN' AND activo = TRUE
+         RETURNING id, correo, nombres, apellidos, estado, organizacion_id`,
+        [email, passwordHash, nombres, apellidos, organization.rows[0].id]
+      );
+      if (!user.rowCount) {
+        const error = new Error('Rol Administrador no disponible.');
+        error.code = 'REGISTRATION_CONFIGURATION_ERROR';
+        throw error;
+      }
+      return { ...user.rows[0], rol_nombre: 'ADMIN', permisos: [], organizationName: organization.rows[0].nombre_comercial };
+    });
   }
 
   async updatePassword(id, passwordHash) {
