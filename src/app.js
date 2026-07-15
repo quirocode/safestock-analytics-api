@@ -83,6 +83,7 @@ class Application {
     this.express.use('/api/ventas', this.routes.sales);
     this.express.use('/api', this.routes.analytics);
     this.express.use('/api/suscripcion', this.routes.subscriptions);
+    this.express.use('/api/subscription', this.routes.subscriptions);
     const errors = new ErrorHandler();
     this.express.use(errors.notFound.bind(errors));
     this.express.use(errors.handle.bind(errors));
