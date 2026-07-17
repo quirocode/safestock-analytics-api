@@ -7,7 +7,8 @@ class AnalyticsRoutes {
     this.router.get('/dashboard/analitico',controller.consolidated);
     this.router.get('/alertas/stock',controller.lowStock);
     this.router.get('/alertas/stock-cero',controller.stockZeroAlerts);
-    this.router.get('/alertas/sospechosas',controller.suspicious);
+    this.router.get('/alertas/sospechosas',authentication.authorize('ADMIN','ADMINISTRADOR'),controller.suspicious);
+    this.router.get('/analytics/employee-risk',authentication.authorize('ADMIN','ADMINISTRADOR'),controller.employeeRisk);
     this.router.get('/reportes/ventas.csv',authentication.authorize('ADMIN','AUDITOR'),controller.exportSales);
   }
 }

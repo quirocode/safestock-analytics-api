@@ -1,12 +1,15 @@
 const HttpError = require('../../shared/domain/http-error');
+const FraudDetectionService = require('./fraud-detection-service');
 
 class AnalyticsService {
   constructor({ repository, reportExporter, timeZone }) {
     this.repository = repository; this.reportExporter = reportExporter; this.timeZone = timeZone;
+    this.fraudDetection = new FraudDetectionService(repository);
   }
   async summary() { const summary=await this.repository.summary(); return { totalVentasHoy:summary.total_ventas_hoy, transaccionesHoy:summary.transacciones_hoy, productosBajoStock:summary.productos_bajo_stock, zonaHoraria:this.timeZone }; }
   lowStock() { return this.repository.lowStock(); }
-  suspicious(threshold) { return this.repository.suspicious(threshold); }
+  suspicious({ organizationId, threshold }) { return this.fraudDetection.suspicious({ organizationId, threshold }); }
+  employeeRisk({ organizationId, query }) { return this.fraudDetection.employeeRisk({ organizationId, query }); }
   advanced(query) { return this.repository.advanced(Math.min(Math.max(Number(query.dias)||30,7),365)); }
   async consolidated(query) {
     const filters = this.normalizeFilters(query);
