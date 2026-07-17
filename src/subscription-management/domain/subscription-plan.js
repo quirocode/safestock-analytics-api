@@ -9,8 +9,10 @@ class SubscriptionPlan {
     this.maxLocations = data.max_locales == null ? null : Number(data.max_locales);
     this.maxUsers = data.max_usuarios == null ? null : Number(data.max_usuarios);
     this.requiresCancellationReason = Boolean(data.exige_motivo_anulacion);
-    this.fraudEnabled = Boolean(data.antifraude_habilitado);
-    this.fraudThreshold = data.umbral_antifraude == null ? null : Number(data.umbral_antifraude);
+    this.fraudEnabled = data.codigo === 'EMPRENDEDOR' ? true : Boolean(data.antifraude_habilitado);
+    this.fraudThreshold = data.codigo === 'EMPRENDEDOR' && data.umbral_antifraude == null
+      ? 50
+      : data.umbral_antifraude == null ? null : Number(data.umbral_antifraude);
     this.activityDashboard = Boolean(data.dashboard_actividades);
     this.analyticDashboard = Boolean(data.dashboard_analitico);
     this.alertChannel = data.canal_alertas;
